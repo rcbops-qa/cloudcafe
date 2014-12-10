@@ -14,16 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cafe.engine.http.client import AutoMarshallingHTTPClient
+from cloudcafe.compute.common.composites import BaseComputeComposite
+from cloudcafe.compute.extensions.floating_ips_api.client import \
+    FloatingIPsClient
 
 
-class DesignateClient(AutoMarshallingHTTPClient):
+class FloatingIPsComposite(BaseComputeComposite):
 
-    def __init__(self, url, serialize_format, deserialize_format):
-        super(DesignateClient, self).__init__(serialize_format,
-                                              deserialize_format)
-        self.url = url.rstrip('/')
-        self.default_headers['Content-Type'] = 'application/{0}'.format(
-            self.serialize_format)
-        self.default_headers['Accept'] = 'application/{0}'.format(
-            self.deserialize_format)
+    def __init__(self, auth_composite):
+        super(FloatingIPsComposite, self).__init__(auth_composite)
+        self.client = FloatingIPsClient(
+            **self.compute_auth_composite.client_args)

@@ -21,6 +21,8 @@ from cloudcafe.compute.extensions.config_drive.composites import \
     ConfigDriveComposite
 from cloudcafe.compute.extensions.console_output_api.composites import \
     ConsoleOutputComposite
+from cloudcafe.compute.extensions.floating_ips_api.composites import \
+    FloatingIPsComposite
 from cloudcafe.compute.extensions.keypairs_api.composites import \
     KeypairsComposite
 from cloudcafe.compute.extensions.rescue_api.composites import RescueComposite
@@ -59,10 +61,11 @@ class _ComputeAuthComposite(MemoizedAuthServiceComposite):
         super(_ComputeAuthComposite, self).__init__(
             service_name=self.compute_endpoint_config.compute_endpoint_name,
             region=self.compute_endpoint_config.region,
+            url_type=self.compute_endpoint_config.endpoint_type,
             endpoint_config=self._auth_endpoint_config,
             user_config=self._auth_user_config)
 
-        self.servers_url = self.public_url
+        self.servers_url = self.endpoint_url
 
         if self.compute_endpoint_config.compute_endpoint_url:
             self.servers_url = '{0}/{1}'.format(
@@ -104,12 +107,14 @@ class ComputeComposite(object):
         self.boot_from_volume = BootFromVolumeComposite(auth_composite)
         self.config_drive = ConfigDriveComposite(auth_composite)
         self.security_groups = SecurityGroupsComposite(auth_composite)
+        self.floating_ips = FloatingIPsComposite(auth_composite)
 
         self.servers.behaviors = self.servers.behavior_class(
             servers_client=self.servers.client,
             images_client=self.images.client,
             servers_config=self.servers.config,
             images_config=self.images.config,
+            floating_ips_client=self.floating_ips.client,
             flavors_config=self.flavors.config,
             security_groups_config=self.security_groups.config)
 
@@ -121,6 +126,7 @@ class ComputeComposite(object):
                 images_config=self.images.config,
                 flavors_config=self.flavors.config,
                 server_behaviors=self.servers.behaviors,
+                security_groups_config=self.security_groups.config,
                 boot_from_volume_client=self.boot_from_volume.client,)
 
         self.images.behaviors = self.images.behavior_class(

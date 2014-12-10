@@ -16,8 +16,6 @@ limitations under the License.
 
 import json
 from ast import literal_eval
-from warnings import warn, simplefilter
-simplefilter("default", DeprecationWarning)
 
 from cloudcafe.common.models.configuration import ConfigSectionInterface
 
@@ -31,11 +29,6 @@ class ServersConfig(ConfigSectionInterface):
         """
         Number of times to try to build a resource when using a behavior.
         """
-        warn(
-            "The resource_build_attempts parameter is deprecated. "
-            "If you want to retry builds, you will need to do so in "
-            "your own logic.",
-            DeprecationWarning)
         return int(self.get("resource_build_attempts", 1))
 
     @property
@@ -147,6 +140,11 @@ class ServersConfig(ConfigSectionInterface):
         return json.loads(self.get("expected_networks", '{}'))
 
     @property
+    def floating_ip_pool_name(self):
+        """Name of the floating IP pool"""
+        return self.get("floating_ip_pool_name")
+
+    @property
     def default_network(self):
         """Id of the network to use by default for servers"""
         return self.get("default_network")
@@ -185,3 +183,11 @@ class ServersConfig(ConfigSectionInterface):
         The path to which files will be injected.
         """
         return self.get("default_file_path")
+
+    @property
+    def auto_assign_floating_ip(self):
+        """
+        If a floating IP address should be assigned to created
+        servers by default.
+        """
+        return self.get_boolean("auto_assign_floating_ip", False)

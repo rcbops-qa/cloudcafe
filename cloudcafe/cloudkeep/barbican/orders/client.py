@@ -38,9 +38,8 @@ class OrdersClient(BarbicanRestClient):
         return '{base}/{order_id}'.format(base=self._get_base_url(),
                                           order_id=order_id)
 
-    def create_order(self, name, algorithm, bit_length, mode, expiration,
-                     order_type, payload_content_type,
-                     payload_content_encoding, headers=None):
+    def create_order(self, name, payload_content_type, algorithm,
+                     bit_length, mode, expiration, headers=None):
         """
         POST http://.../v1/orders/{order_uuid}
         Creates an order to generate a secret
@@ -48,20 +47,18 @@ class OrdersClient(BarbicanRestClient):
         remote_url = self._get_base_url()
         secret = Secret(name=name,
                         payload_content_type=payload_content_type,
-                        payload_content_encoding=payload_content_encoding,
                         expiration=expiration,
                         algorithm=algorithm,
                         bit_length=bit_length,
                         mode=mode)
-        req_obj = Order(meta=secret, order_type=order_type)
+        req_obj = Order(secret=secret)
 
         resp = self.request('POST', remote_url, request_entity=req_obj,
                             response_entity_type=OrderRef, headers=headers)
         return resp
 
-    def create_order_w_payload(self, name, algorithm, bit_length, mode,
-                               expiration, payload, payload_content_type,
-                               payload_content_encoding, order_type):
+    def create_order_w_payload(self, name, payload_content_type, algorithm,
+                               bit_length, mode, expiration, payload):
         """
         POST http://.../v1/orders/{order_uuid}
         Creates an order to generate a secret with plain text. This is
@@ -71,13 +68,12 @@ class OrdersClient(BarbicanRestClient):
         remote_url = self._get_base_url()
         secret = Secret(name=name,
                         payload_content_type=payload_content_type,
-                        payload_content_encoding=payload_content_encoding,
                         expiration=expiration,
                         algorithm=algorithm,
                         bit_length=bit_length,
                         mode=mode,
                         payload=payload)
-        req_obj = Order(meta=secret, order_type=order_type)
+        req_obj = Order(secret=secret)
 
         resp = self.request('POST', remote_url, request_entity=req_obj,
                             response_entity_type=OrderRef)

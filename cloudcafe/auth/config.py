@@ -32,10 +32,11 @@ class UserAuthConfig(ConfigSectionInterface):
     @property
     def strategy(self):
         """The type of authentication exposed by the auth_endpoint. Currently,
-        supported values are 'keystone', 'rax_auth', 'rax_auth_mfa', or
-        'saio_tempauth'.
+        supported values are 'keystone', 'rax_auth' or 'saio_tempauth'.
         """
+
         return self.get("strategy")
+
 
 class UserConfig(ConfigSectionInterface):
 
@@ -75,8 +76,3 @@ class UserConfig(ConfigSectionInterface):
     def project_id(self):
         """The users's project_id, if applicable"""
         return self.get("project_id")
-
-    @property
-    def passcode(self):
-        """The auth MFA's secondary password/passcode"""
-        return self.get("passcode", 'MFA_PASSCODE_NOT_SET')

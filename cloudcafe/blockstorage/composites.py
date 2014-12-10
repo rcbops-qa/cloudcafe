@@ -23,7 +23,7 @@ class _BlockstorageAuthComposite(MemoizedAuthServiceComposite):
         self.availability_zone = \
             self.config.availability_zone
         super(_BlockstorageAuthComposite, self).__init__(
-            self.config.identity_service_name, self.config.region)
+            self.config.identity_service_name, self.config.region, self.config.endpoint_type)
 
 
 class _BaseVolumesComposite(object):
@@ -35,13 +35,14 @@ class _BaseVolumesComposite(object):
         self.blockstorage_auth = _BlockstorageAuthComposite()
         self.config = self._config()
         self.client = self._client(
-            url=self.blockstorage_auth.public_url,
+            url=self.blockstorage_auth.endpoint_url,
             auth_token=self.blockstorage_auth.token_id,
             serialize_format=self.config.serialize_format,
             deserialize_format=self.config.deserialize_format)
         self.behaviors = self._behaviors(self.client)
 
 
+#For version specific tests
 class VolumesV1Composite(_BaseVolumesComposite):
     _config = v1Config
     _client = v1Client
@@ -54,6 +55,7 @@ class VolumesV2Composite(_BaseVolumesComposite):
     _behaviors = v2Behaviors
 
 
+#For version agnostic tests
 class VolumesAutoComposite(object):
     def __new__(cls):
         config = VolumesAPIConfig()

@@ -60,13 +60,12 @@ class ObjectStorageAPI_Behaviors(BaseBehavior):
             self.config = ObjectStorageAPIConfig()
 
     def retry_until_success(self, func, func_args=None, func_kwargs=None,
-                            success_func=None, max_retries=None,
-                            sleep_time=None):
+                            success_func=None, timeout=None):
         """
         Allows a function to be re-executed if a success condition is not met.
-        The function will be repeatedly executed, with a sleep time between
-        retries, until a max retries count is hit. This mechanism ensures that
-        eventual consistency does not interfere with test results.
+        The function will be called repeatedly, exponentially backing off until
+        a timeout is met.  This mechanism ensures that eventual consistency
+        does not interfere with test results.
 
         @param func: The function to be called and tested.
         @type func: function
@@ -84,58 +83,60 @@ class ObjectStorageAPI_Behaviors(BaseBehavior):
                              is not provided, it will default to checking
                              response.ok.
         @type success_func: function
-        @param max_retries: Perform the function call up until the max
-                            number of retries. A default of 5 will be used
-                            if no value is passed in.
-        @type max_retries: int
-        @param sleep_time: The time, in seconds, to sleep between function
-                           call retries. A default of 5 seconds will be
-                           used if no value is passed in.
-        @type sleep_time: int
+        @param timeout: Perform no more than one function call once the
+                        timeout in seconds has elapsed since the first call.
+                        If timeout is not provided, the function will only
+                        be called once.
+        @type timeout: int
 
         @return: The most resent response from calling func.
         @rtype: Response Object
         """
         request_count = 0
+        sleep_seconds = 0
         func_args = func_args or []
         func_kwargs = func_kwargs or {}
+
+        if self.config.list_timeout:
+            stop_time = (datetime.datetime.now() +
+                         datetime.timedelta(seconds=timeout))
 
         def default_success_func(response):
             return response.ok
         success_func = success_func or default_success_func
 
-        # Didn't get a value for max_retries, set to default value from config
-        if not max_retries:
-            max_retries = self.config.max_retry_count
+        response = None
+        reached_timeout = False
+        while not reached_timeout:
+            response = None
 
-        # Didn't get a value for sleep_time, set to default value from config
-        if not sleep_time:
-            sleep_time = self.config.retry_sleep_time
+            if not timeout:
+                reached_timeout = True
+            else:
+                reached_timeout = datetime.datetime.now() >= stop_time
 
-        function_response = None
-        while request_count < max_retries:
+            if sleep_seconds == 0:
+                sleep_seconds = 1
+            else:
+                sleep(sleep_seconds)
+                sleep_seconds = sleep_seconds * 2
 
-            # Call function that was passed in with its arguments
-            function_response = func(*func_args, **func_kwargs)
-
-            # Check the response with the success function
-            if success_func(function_response):
-                return function_response
-
-            self._log.info('Retry - HTTP request attempt {} failed '
-                           'success_func test.'.format(request_count))
-
-            request_count += 1
-            sleep(sleep_time)
-
-        if function_response.ok:
+            response = func(*func_args, **func_kwargs)
+            request_count = request_count + 1
+            if response:
+                if success_func(response):
+                    return response
+                self._log.info('EC - HTTP request attempt {} failed '
+                               'success_func test.'.format(request_count))
+            else:
+                raise ObjectStorageAPIBehaviorException('invalid response')
+        if response.ok:
             # If the response came back successful, but the success condition
             # did not occur, then return the response anyway so the caller
             # can deal with how to handle the situation.
-            return function_response
+            return response
         raise ObjectStorageAPIBehaviorException(
-            'Unable to satisfy success condition within {0} retries'.format(
-                max_retries), function_response)
+            'Unable to satisfy success condition.', response)
 
     def generate_unique_container_name(self, identifier=None):
         """
@@ -312,7 +313,7 @@ class ObjectStorageAPI_Behaviors(BaseBehavior):
                 'params': params,
                 'requestslib_kwargs': requestslib_kwargs},
             success_func=success_func,
-            max_retries=10)
+            timeout=self.config.list_timeout)
         return response.entity
 
     @behavior(ObjectStorageAPIClient)
@@ -437,7 +438,7 @@ class ObjectStorageAPI_Behaviors(BaseBehavior):
             func_args=[container_name],
             func_kwargs={'requestslib_kwargs': requestslib_kwargs},
             success_func=success_func,
-            max_retries=10)
+            timeout=self.config.list_timeout)
 
         return int(response.headers.get('x-container-object-count'))
 
@@ -484,7 +485,7 @@ class ObjectStorageAPI_Behaviors(BaseBehavior):
                 'params': params,
                 'requestslib_kwargs': requestslib_kwargs},
             success_func=success_func,
-            max_retries=10)
+            timeout=self.config.list_timeout)
         return response.entity
 
     @behavior(ObjectStorageAPIClient)

@@ -19,8 +19,6 @@ import string
 import time
 from math import pow
 
-from cloudcafe.common.tools import randomstring
-
 SOURCE_RANDOM = '/dev/urandom'
 SOURCE_ZEROS = '/dev/zero'
 TEMP_LOCATION = '/tmp'
@@ -69,17 +67,10 @@ def random_string(prefix=None, suffix=None, size=8):
     """
     Return a random string of alphanumeric characaters of 'size' length.
     """
-    if size <= 0:
-        return "{0}{1}".format(prefix or '', suffix or '')
 
     charpool = tuple(string.ascii_letters + string.digits)
-    final_string = ""
-    while size > 0:
-        segment_size = min(int(len(charpool)/2), size)
-        size = size - segment_size
-        final_string += "".join(
-            random.sample((charpool), segment_size))
-    return "{0}{1}{2}".format(prefix or '', final_string, suffix or '')
+    rstr = "".join(random.sample((charpool), size))
+    return "{0}{1}{2}".format(prefix or '', rstr, suffix or '')
 
 
 def random_ip(pattern=None):
@@ -117,8 +108,7 @@ def random_int(min_int, max_int):
 
 
 def rand_name(name='test'):
-    return "{name}{suffix}".format(
-        name=name, suffix=randomstring.get_random_string())
+    return name + str(random.randint(99999, 1000000))
 
 
 def random_item_in_list(selection_list):

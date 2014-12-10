@@ -14,86 +14,40 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cloudcafe.networking.networks.common.config import NetworkingBaseConfig
+from cloudcafe.common.models.configuration import ConfigSectionInterface
 
 
-class SubnetsConfig(NetworkingBaseConfig):
+class SubnetsAPIConfig(ConfigSectionInterface):
     """Subnet is the resource"""
 
-    SECTION_NAME = 'subnets'
+    SECTION_NAME = 'subnets_api'
 
     @property
-    def starts_with_name(self):
-        """Subnet start name label for test runs"""
-        return self.get("starts_with_name", "test_subnet")
+    def resource_build_attempts(self):
+        """Number of times to try to create a resource"""
+        return int(self.get("resource_build_attempts", 1))
 
     @property
-    def v4_subnets_per_network(self):
-        """Subnets IPv4 quota per network"""
-        return int(self.get("v4_subnets_per_network", 1))
+    def keep_resources(self):
+        """Flag for not deleting resources on tearDown"""
+        return self.get_boolean("keep_resources", False)
 
     @property
-    def v6_subnets_per_network(self):
-        """Subnets IPv6 quota per network"""
-        return int(self.get("v6_subnets_per_network", 1))
+    def keep_resources_on_failure(self):
+        """Flag for not deleting resources w failures on tearDown"""
+        return self.get_boolean("keep_resources_on_failure", False)
 
     @property
-    def dns_nameservers_per_subnet(self):
-        """dns nameservers per subnet quota"""
-        return int(self.get("dns_nameservers_per_subnet", 2))
+    def resource_create_timeout(self):
+        """Seconds to wait for creating a resource"""
+        return int(self.get("resource_create_timeout", 15))
 
     @property
-    def routes_per_subnet(self):
-        """host routes per subnet quota"""
-        return int(self.get("routes_per_subnet", 3))
+    def resource_delete_timeout(self):
+        """Seconds to wait for deleting a resource"""
+        return int(self.get("resource_delete_timeout", 15))
 
     @property
-    def alloc_pools_per_subnet(self):
-        """allocation pools per subnet quota"""
-        return int(self.get("alloc_pools_per_subnet", 5))
-
-    @property
-    def ipv4_suffix(self):
-        """Subnet create default IPv4 suffix"""
-        return int(self.get("ipv4_suffix", 24))
-
-    @property
-    def ipv4_suffix_max(self):
-        """Subnet max suffix default value"""
-        return int(self.get("ipv4_suffix_max", 30))
-
-    @property
-    def ipv4_prefix(self):
-        """Subnet create default IPv4 prefix, can use * values
-           for a random cidr create
-        """
-        return self.get("ipv4_prefix", "192.168.*.0")
-
-    @property
-    def private_ipv4_range(self):
-        """Expected IPv4 private cidr range when creating subnets
-           for ex. 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
-        """
-        return self.get("private_ipv4_range", "192.168.0.0/16")
-
-    @property
-    def ipv6_suffix(self):
-        """Subnet create default IPv6 suffix"""
-        return int(self.get("ipv6_suffix", 64))
-
-    @property
-    def ipv6_suffix_max(self):
-        """Subnet max suffix default value"""
-        return int(self.get("ipv6_suffix_max", 64))
-
-    @property
-    def ipv6_prefix(self):
-        """Subnet create default IPv6 prefix"""
-        return self.get("ipv6_prefix", "fd00::")
-
-    @property
-    def private_ipv6_range(self):
-        """Expected IPv6 private cidr range when creating subnets
-           for ex. fd00::/8
-        """
-        return self.get("private_ipv6_range", "fd00::/8")
+    def resource_change_status_timeout(self):
+        """Seconds to wait for a status change in the resource"""
+        return int(self.get("resource_change_status_timeout", 15))

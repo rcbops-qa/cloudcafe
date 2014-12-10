@@ -14,60 +14,40 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cloudcafe.networking.networks.common.config import NetworkingBaseConfig
+from cloudcafe.common.models.configuration import ConfigSectionInterface
 
 
-class PortsConfig(NetworkingBaseConfig):
+class PortsAPIConfig(ConfigSectionInterface):
     """Port is the resource"""
 
-    SECTION_NAME = 'ports'
+    SECTION_NAME = 'ports_api'
 
     @property
-    def starts_with_name(self):
-        """Port start name label for test runs"""
-        return self.get("starts_with_name", "test_port")
+    def resource_build_attempts(self):
+        """Number of times to try to create a resource"""
+        return int(self.get("resource_build_attempts", 1))
 
     @property
-    def multiple_ports(self):
-        """Test multiple ports smoke test ports number"""
-        return int(self.get("multiple_ports", 10))
+    def keep_resources(self):
+        """Flag for not deleting resources on tearDown"""
+        return self.get_boolean("keep_resources", False)
 
     @property
-    def ports_per_network(self):
-        """Ports per network quota"""
-        return int(self.get("ports_per_network", 250))
-
-    @property
-    def test_quotas(self):
-        """Flag for running the ports quotas tests"""
-        return self.get_boolean("test_quotas", False)
-
-    @property
-    def fixed_ips_per_port(self):
-        """Ports fixed IPs quota"""
-        return int(self.get("fixed_ips_per_port", 4))
-
-    @property
-    def use_over_limit_retry(self):
-        """Flag to enable/disable retries due to over limits responses"""
-        return self.get_boolean("use_over_limit_retry", False)
-
-    @property
-    def api_poll_interval(self):
-        """Time interval for api calls on retry loops"""
-        return int(self.get("api_poll_interval", 7))
+    def keep_resources_on_failure(self):
+        """Flag for not deleting resources w failures on tearDown"""
+        return self.get_boolean("keep_resources_on_failure", False)
 
     @property
     def resource_create_timeout(self):
         """Seconds to wait for creating a resource"""
-        return int(self.get("resource_create_timeout", 60))
-
-    @property
-    def resource_update_timeout(self):
-        """Seconds to wait for updating a resource"""
-        return int(self.get("resource_update_timeout", 60))
+        return int(self.get("resource_create_timeout", 15))
 
     @property
     def resource_delete_timeout(self):
         """Seconds to wait for deleting a resource"""
-        return int(self.get("resource_delete_timeout", 60))
+        return int(self.get("resource_delete_timeout", 15))
+
+    @property
+    def resource_change_status_timeout(self):
+        """Seconds to wait for a status change in the resource"""
+        return int(self.get("resource_change_status_timeout", 15))

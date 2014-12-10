@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2013 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -236,27 +236,6 @@ class ImagesConfig(ConfigSectionInterface):
     def task_timeout(self):
         """Length of time to wait before giving up on reaching a status"""
         return int(self.get("task_timeout"))
-
-    @property
-    def do_not_delete_files(self):
-        """List of files that should not be deleted"""
-        return ([x.strip() for x in
-                 self.get('do_not_delete_files', "").split(',')])
-
-    @property
-    def versions_data(self):
-        """Path to versions data"""
-        return self.get('versions_data')
-
-    @property
-    def versions_list(self):
-        """List of versions"""
-        return [x.strip() for x in self.get('versions_list', "").split(',')]
-
-    @property
-    def account_list(self):
-        """List of accounts"""
-        return [x.strip() for x in self.get('account_list', "").split(',')]
 
     @property
     def image_schema_json(self):

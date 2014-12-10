@@ -38,6 +38,10 @@ class ComputeConfig(ConfigSectionInterface):
     def hypervisor(self):
         return self.get("hypervisor")
 
+    @property
+    def vnc_supported(self):
+        return self.get_boolean("vnc_supported")
+
 
 class ComputeEndpointConfig(ConfigSectionInterface):
 
@@ -55,6 +59,10 @@ class ComputeEndpointConfig(ConfigSectionInterface):
     def compute_endpoint_url(self):
         """Optional override of the Compute url"""
         return self.get("compute_endpoint_url")
+
+    @property
+    def endpoint_type(self):
+        return self.get('endpoint_type', 'public_url')
 
 
 class ComputeAdminEndpointConfig(ComputeEndpointConfig):

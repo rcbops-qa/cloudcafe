@@ -1,5 +1,5 @@
 """
-Copyright 2014 Rackspace
+Copyright 2013 Rackspace
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ from cafe.engine.behaviors import BaseBehavior
 from cloudcafe.common.behaviors import StatusProgressionVerifier
 from cloudcafe.common.resources import ResourcePool
 from cloudcafe.common.tools.datagen import rand_name
-from cloudcafe.compute.common.exceptions import (
-    BuildErrorException, RequiredResourceException, TimeoutException)
 from cloudcafe.images.common.constants import ImageProperties, Messages
+from cloudcafe.images.common.exceptions import (
+    BuildErrorException, RequiredResourceException, TimeoutException)
 from cloudcafe.images.common.types import (
     ImageContainerFormat, ImageDiskFormat, ImageStatus, Schemas, TaskStatus,
     TaskTypes)
@@ -295,16 +295,14 @@ class ImagesBehaviors(BaseBehavior):
 
         for attempt in range(attempts):
             try:
-                resp = self.client.create_task(input_=input_, type_=type_)
-                task_id = resp.entity.id_
+                response = self.client.create_task(input_=input_, type_=type_)
+                task_id = response.entity.id_
                 task = self.wait_for_task_status(task_id, TaskStatus.SUCCESS)
                 return task
-            except (BuildErrorException, TimeoutException) as ex:
-                failure = ('Attempt {0}: Failed to create task with '
-                           'the message '
-                           '{1}'.format(attempt + 1, ex.message))
-                self._log.error(failure)
-                failures.append(failure)
+            except (TimeoutException, BuildErrorException) as ex:
+                self._log.error('Failed to create task with uuid {0}: '
+                                '{1}'.format(task_id, ex.message))
+                failures.append(ex.message)
         raise RequiredResourceException(
             'Failed to successfully create a task after {0} attempts: '
             '{1}'.format(attempts, failures))
@@ -393,9 +391,9 @@ class ImagesBehaviors(BaseBehavior):
         if task.owner is None:
             errors.append(self.error_msg.format(
                 'owner', 'not None', task.owner))
-        if task.message != '':
+        if task.message != 'None':
             errors.append(self.error_msg.format(
-                'message', '', task.message))
+                'message', 'None', task.message))
         if task.schema != '/v2/schemas/task':
             errors.append(self.error_msg.format(
                 'schema', '/v2/schemas/task', task.schema))
@@ -442,7 +440,7 @@ class ImagesBehaviors(BaseBehavior):
                 raise BuildErrorException(
                     'Task with uuid {0} entered {1} status. Task responded '
                     'with the message {2}'.format(
-                        task.id_, task.status, task.message.replace('\\', '')))
+                        task.id_, task.status, task.message))
 
             if task.status == desired_status:
                 break
@@ -468,7 +466,7 @@ class ImagesBehaviors(BaseBehavior):
                                      final_status=None):
         """
         @summary: Create a task and verify that it transitions through the
-        expected statuses for a successful scenario
+        expected statuses
         """
 
         response = self.client.create_task(
@@ -488,51 +486,13 @@ class ImagesBehaviors(BaseBehavior):
         verifier.add_state(
             expected_statuses=[TaskStatus.PROCESSING],
             acceptable_statuses=[TaskStatus.SUCCESS],
-            error_statuses=[TaskStatus.PENDING, TaskStatus.FAILURE],
+            error_statuses=[TaskStatus.FAILURE],
             timeout=self.config.task_timeout, poll_rate=1)
 
         if final_status == TaskStatus.SUCCESS:
             verifier.add_state(
                 expected_statuses=[TaskStatus.SUCCESS],
-                error_statuses=[TaskStatus.PENDING, TaskStatus.FAILURE],
-                timeout=self.config.task_timeout, poll_rate=1)
-
-        verifier.start()
-
-        response = self.client.get_task(task.id_)
-        return response.entity
-
-    def create_task_with_transitions_failure(self, input_, task_type,
-                                             final_status=None):
-        """
-        @summary: Create a task and verify that it transitions through the
-        expected statuses for a failure scenario
-        """
-
-        response = self.client.create_task(
-            input_=input_, type_=task_type)
-        task = response.entity
-
-        # Verify task progresses as expected
-        verifier = StatusProgressionVerifier(
-            'task', task.id_, self.get_task_status, task.id_)
-
-        verifier.add_state(
-            expected_statuses=[TaskStatus.PENDING],
-            acceptable_statuses=[TaskStatus.PROCESSING, TaskStatus.FAILURE],
-            error_statuses=[TaskStatus.SUCCESS],
-            timeout=self.config.task_timeout, poll_rate=1)
-
-        verifier.add_state(
-            expected_statuses=[TaskStatus.PROCESSING],
-            acceptable_statuses=[TaskStatus.FAILURE],
-            error_statuses=[TaskStatus.PENDING, TaskStatus.SUCCESS],
-            timeout=self.config.task_timeout, poll_rate=1)
-
-        if final_status == TaskStatus.FAILURE:
-            verifier.add_state(
-                expected_statuses=[TaskStatus.FAILURE],
-                error_statuses=[TaskStatus.PENDING, TaskStatus.SUCCESS],
+                error_statuses=[TaskStatus.FAILURE],
                 timeout=self.config.task_timeout, poll_rate=1)
 
         verifier.start()

@@ -25,17 +25,17 @@ from cloudcafe.compute.servers_api.models.requests import Personality
 
 class CreateServerFromVolume(AutoMarshallingModel):
 
-    def __init__(self, name, flavor_ref, block_device_mapping_v2,
+    def __init__(self, name, flavor_ref, block_device_mapping_v2, security_groups,
                  max_count=None, min_count=None, networks=None,
                  image_ref=None, personality=None, user_data=None,
                  metadata=None, accessIPv4=None, accessIPv6=None,
                  disk_config=None, admin_pass=None, key_name=None,
-                 config_drive=None, scheduler_hints=None,
-                 security_groups=None):
+                 config_drive=None, scheduler_hints=None):
 
         super(CreateServerFromVolume, self).__init__()
         self.name = name
         self.flavor_ref = flavor_ref
+        self.security_groups = security_groups
         self.block_device_mapping_v2 = block_device_mapping_v2
         self.max_count = max_count
         self.min_count = min_count
@@ -51,7 +51,6 @@ class CreateServerFromVolume(AutoMarshallingModel):
         self.key_name = key_name
         self.config_drive = config_drive
         self.scheduler_hints = scheduler_hints
-        self.security_groups = security_groups
 
     def _obj_to_json(self):
         body = {
@@ -61,6 +60,7 @@ class CreateServerFromVolume(AutoMarshallingModel):
             'max_count': self.max_count,
             'min_count': self.min_count,
             'networks': self.networks,
+            'security_groups': self.security_groups,
             'imageRef': self.image_ref,
             'personality': self.personality,
             'user_data': self.user_data,
@@ -70,8 +70,7 @@ class CreateServerFromVolume(AutoMarshallingModel):
             'OS-DCF:diskConfig': self.disk_config,
             'adminPass': self.admin_pass,
             'key_name': self.key_name,
-            'config_drive': self.config_drive,
-            'security_groups': self.security_groups
+            'config_drive': self.config_drive
         }
 
         body = self._remove_empty_values(body)
@@ -94,8 +93,7 @@ class CreateServerFromVolume(AutoMarshallingModel):
             'accessIPv6': self.accessIPv6,
             'adminPass': self.admin_pass,
             'key_name': self.key_name,
-            'config_drive': self.config_drive,
-            'security_groups': self.security_groups
+            'config_drive': self.config_drive
         }
         element = ET.Element('server')
         element.set('xmlns', Constants.XML_API_NAMESPACE)

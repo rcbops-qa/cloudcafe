@@ -16,13 +16,9 @@ limitations under the License.
 from cafe.drivers.unittest.decorators import memoized
 from cloudcafe.auth.config import UserAuthConfig, UserConfig
 from cloudcafe.extensions.rax_auth.v2_0.tokens_api.client import \
-    TokenAPI_Client as RaxTokenAPI_Client, \
-    MFA_TokenAPI_Client as RaxToken_MFA_API_Client
-
-from cloudcafe.extensions.rax_auth.v2_0.tokens_api.behaviors \
-    import TokenAPI_Behaviors as RaxTokenAPI_Behaviors, \
-    MFA_TokenAPI_Behaviors as RaxToken_MFA_API_Behaviors
-
+    TokenAPI_Client as RaxTokenAPI_Client
+from cloudcafe.extensions.rax_auth.v2_0.tokens_api.behaviors import \
+    TokenAPI_Behaviors as RaxTokenAPI_Behaviors
 from cloudcafe.extensions.saio_tempauth.v1_0.client import \
     TempauthAPI_Client as SaioAuthAPI_Client
 from cloudcafe.extensions.saio_tempauth.v1_0.behaviors import \
@@ -37,13 +33,14 @@ class MemoizedAuthServiceCompositeException(Exception):
 class MemoizedAuthServiceComposite(object):
 
     def __init__(
-            self, service_name, region, endpoint_config=None,
+            self, service_name, region, url_type=None, endpoint_config=None,
             user_config=None):
 
         self.endpoint_config = endpoint_config or UserAuthConfig()
         self.user_config = user_config or UserConfig()
         self.service_name = service_name
         self.region = region
+        self.url_type = url_type
 
     @classmethod
     @memoized
@@ -52,20 +49,6 @@ class MemoizedAuthServiceComposite(object):
         client = RaxTokenAPI_Client(auth_endpoint, 'json', 'json')
         behaviors = RaxTokenAPI_Behaviors(client)
         return behaviors.get_access_data(username, api_key, tenant_id)
-
-    @classmethod
-    @memoized
-    def get_rackspace_mfa_access_data(cls, username, password, tenant_id,
-                                      auth_endpoint, passcode):
-        if passcode is None:
-            # TODO: This is a place holder for adding the functionality to
-            # use an external service (e.g. - SMS) to provide the passcode
-            # Also add this to get_access_data() in the AuthProvider class
-            pass
-        token_client = RaxToken_MFA_API_Client(
-            auth_endpoint, 'json', 'json', passcode)
-        token_behaviors = RaxToken_MFA_API_Behaviors(token_client)
-        return token_behaviors.get_access_data(username, password, tenant_id)
 
     @classmethod
     @memoized
@@ -95,12 +78,6 @@ class MemoizedAuthServiceComposite(object):
                 self.user_config.username, self.user_config.api_key,
                 self.user_config.tenant_id, self.endpoint_config.auth_endpoint)
 
-        elif self.auth_strategy == 'rax_auth_mfa':
-            return self.get_rackspace_mfa_access_data(
-                self.user_config.username, self.user_config.password,
-                self.user_config.tenant_id, self.endpoint_config.auth_endpoint,
-                self.user_config.passcode)
-
         elif self.auth_strategy == 'saio_tempauth':
             return self.get_saio_tempauth_access_data(
                 self.user_config.username, self.user_config.password,
@@ -121,16 +98,16 @@ class MemoizedAuthServiceComposite(object):
         return self.access_data.token.tenant.id_
 
     @property
-    def public_url(self):
+    def endpoint_url(self):
         endpoint = self.service.get_endpoint(self.region)
         try:
-            return endpoint.public_url
-        except AttributeError:
+            return getattr(endpoint, self.url_type)
+        except:
             raise MemoizedAuthServiceCompositeException(
                 "Unable to locate an endpoint with the region '{0}' in the "
                 "service '{1}' from the service service catalog for user {2}. "
-                "No public URL found.".format(
-                    self.region, self.service_name, self.tenant_id))
+                "No {3} found.".format(
+                    self.region, self.service_name, self.tenant_id, self.url_type))
 
     @property
     def service(self):
@@ -158,19 +135,6 @@ class AuthProvider(object):
             token_client = RaxTokenAPI_Client(
                 endpoint_config.auth_endpoint, 'json', 'json')
             token_behaviors = RaxTokenAPI_Behaviors(token_client)
-            return token_behaviors.get_access_data(user_config.username,
-                                                   user_config.api_key,
-                                                   user_config.tenant_id)
-
-        elif endpoint_config.strategy.lower() == 'rax_auth_mfa':
-            passcode = user_config.passcode
-            if passcode is None:
-                # TODO: This is a place holder for adding the functionality to
-                # use an external service (e.g. - SMS) to provide the passcode
-                pass
-            token_client = RaxToken_MFA_API_Client(
-                endpoint_config.auth_endpoint, 'json', 'json', passcode)
-            token_behaviors = RaxToken_MFA_API_Behaviors(token_client)
             return token_behaviors.get_access_data(user_config.username,
                                                    user_config.api_key,
                                                    user_config.tenant_id)

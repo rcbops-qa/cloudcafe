@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from cloudcafe.compute.common.behaviors import BaseComputeBehavior
+from cafe.engine.behaviors import BaseBehavior
 from cloudcafe.compute.common.types import NovaServerStatusTypes \
     as ServerStates
 from cloudcafe.common.tools.datagen import rand_name
@@ -22,11 +22,11 @@ from cloudcafe.compute.common.exceptions import \
     TimeoutException, BuildErrorException, RequiredResourceException
 
 
-class VolumeServerBehaviors(BaseComputeBehavior):
+class VolumeServerBehaviors(BaseBehavior):
 
     def __init__(self, servers_client, images_client, servers_config,
-                 images_config, flavors_config, server_behaviors,
-                 boot_from_volume_client=None, security_groups_config=None):
+                 images_config, flavors_config, server_behaviors, security_groups_config,
+                 boot_from_volume_client=None):
         super(VolumeServerBehaviors, self).__init__()
         self.config = servers_config
         self.servers_client = servers_client
@@ -34,8 +34,8 @@ class VolumeServerBehaviors(BaseComputeBehavior):
         self.images_config = images_config
         self.flavors_config = flavors_config
         self.server_behaviors = server_behaviors
-        self.boot_from_volume_client = boot_from_volume_client
         self.security_groups_config = security_groups_config
+        self.boot_from_volume_client = boot_from_volume_client
 
     def create_active_server(
             self, name=None, image_ref=None, flavor_ref=None,
@@ -70,8 +70,6 @@ class VolumeServerBehaviors(BaseComputeBehavior):
         @type disk_config: String
         @parm block_device_mapping:fields needed to boot a server from a volume
         @type block_device_mapping: dict
-        @param security_groups: List of security groups for the server
-        @type security_groups: List of dict
         @return: Response Object containing response code and
                  the server domain object
         @rtype: Request Response Object
@@ -87,14 +85,13 @@ class VolumeServerBehaviors(BaseComputeBehavior):
         if self.config.default_network:
             networks = [{'uuid': self.config.default_network}]
 
+        default_group_id = self.security_groups_config.default_security_group
         default_groups = None
-        if (self.security_groups_config
-                and self.security_groups_config.default_security_group):
-            default_groups = [
-                {"name": self.security_groups_config.default_security_group}]
+        if default_group_id:
+            default_groups = [{"name": default_group_id}]
 
         if default_groups and security_groups:
-            security_groups.extend(default_groups)
+            security_groups.update(default_groups)
         else:
             security_groups = security_groups or default_groups
 
@@ -114,8 +111,8 @@ class VolumeServerBehaviors(BaseComputeBehavior):
                 metadata=metadata, accessIPv4=accessIPv4,
                 accessIPv6=accessIPv6, disk_config=disk_config,
                 admin_pass=admin_pass, key_name=key_name,
-                config_drive=config_drive, scheduler_hints=scheduler_hints,
-                security_groups=security_groups)
+                security_groups=security_groups,
+                config_drive=config_drive, scheduler_hints=scheduler_hints)
             server_obj = resp.entity
             create_request_id = resp.headers.get('x-compute-request-id')
 
