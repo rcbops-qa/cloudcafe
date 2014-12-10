@@ -198,7 +198,6 @@ class ServerBehaviors(BaseBehavior):
                                                    message=ex.message))
                 failures.append(ex.message)
                 self.servers_client.delete_server(server_obj.id)
-        from pdb import set_trace; set_trace()
         raise RequiredResourceException(
             'Failed to successfully build a server after '
             '{attempts} attempts: {failures}'.format(
@@ -272,7 +271,6 @@ class ServerBehaviors(BaseBehavior):
             server = resp.entity
 
             if server.status.lower() == ServerStates.ERROR.lower():
-                # from pdb import set_trace; set_trace()
                 raise BuildErrorException(
                     "Build failed. Server with uuid {server_id} entered "
                     "ERROR status.".format(server_id=server.id))
@@ -571,7 +569,6 @@ class ServerBehaviors(BaseBehavior):
                     id=server.id, address=ip_address,
                     timeout=self.config.connection_timeout))
         except SshConnectionException:
-            from IPython import embed; embed()
             raise SshConnectionException(
                 'Able to ping server {id} at {address}, but unable to '
                 'connect via ssh within the allowed time of {timeout} '
