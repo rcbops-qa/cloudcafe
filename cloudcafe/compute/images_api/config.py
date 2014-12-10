@@ -38,6 +38,11 @@ class ImagesConfig(ConfigSectionInterface):
         return self.get("primary_image_default_user")
 
     @property
+    def primary_image_default_pass(self):
+        """The default pass created when a server is booted."""
+        return self.get("primary_image_default_pass", None)
+
+    @property
     def primary_image_path_separator(self):
         """The character used to separate directories for the image."""
         return self.get("primary_image_path_separator", "/")
