@@ -524,7 +524,7 @@ class ServerBehaviors(BaseBehavior):
         content = json.loads(response.content)
         ip_address = content['server']['addresses'][config.network_for_ssh][-1]['addr']
         if ip_address in public_rackspace_addresses.keys():
-		ip_address = public_rackspace_addresses[ip_address]
+            ip_address = public_rackspace_addresses[ip_address]
 
         # Get Server Image ID
         if server.image:
