@@ -343,6 +343,11 @@ class Addresses(AutoMarshallingModel):
         @property
         def count(self):
             return len(self.addresses)
+ 
+        @property    
+        def to_set(self):
+            return set([address.addr for address in self.addresses])
+
 
     class _AddrObj(BaseModel):
 
@@ -364,8 +369,8 @@ class Addresses(AutoMarshallingModel):
         super(Addresses, self).__init__()
 
         # Preset properties that should be expected, if not always populated
-        self.public = None
-        self.private = None
+        self.public = self._NetworkAddressesList()
+        self.private = self._NetworkAddressesList()
 
         if len(addr_dict) > 1:
             # adddress_type is PUBLIC/PRIVATE
@@ -402,6 +407,14 @@ class Addresses(AutoMarshallingModel):
         except AttributeError:
             ret = None
         return ret
+
+    def starting_with(self, pattern):
+        for address in self.public.to_set | self.private.to_set:
+            if address.startswith(pattern):
+                return address
+        else:
+            raise LookupError("IP address starting with {} not found."
+                              "".format(pattern))
 
     def __repr__(self):
         ret = '\n'

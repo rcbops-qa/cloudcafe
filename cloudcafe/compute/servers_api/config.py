@@ -100,6 +100,14 @@ class ServersConfig(ConfigSectionInterface):
         return self.get("network_for_ssh")
 
     @property
+    def ip_for_ssh_prefix(self):
+        """
+        A string that matches the prefix of the desired IP to connect to.
+        eg "10.101" or "10." would match an IP such as 10.101.227.4
+        """
+        return self.get("ip_for_ssh_prefix")
+
+    @property
     def ip_address_version_for_ssh(self):
         """
         IP address version to be used for remote connections

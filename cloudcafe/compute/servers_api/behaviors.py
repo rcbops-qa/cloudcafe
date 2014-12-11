@@ -512,17 +512,9 @@ class ServerBehaviors(BaseBehavior):
         @return: Either IPv4 or IPv6 address of instance
         @rtype: String
         """
-        if ip_address is None:
-            network = server.addresses.get_by_name(config.network_for_ssh)
-            if config.ip_address_version_for_ssh == 4:
-                ip_address = network.ipv4
-            elif config.ip_address_version_for_ssh == 6:
-                ip_address = network.ipv6
+        server = self.servers_client.get_server(server.id).entity
+        ip_address = server.addresses.starting_with(config.ip_for_ssh_prefix)
 
-        import json
-        response = self.servers_client.get_server(server.id)
-        content = json.loads(response.content)
-        ip_address = content['server']['addresses'][config.network_for_ssh][-1]['addr']
         if ip_address in public_rackspace_addresses.keys():
             ip_address = public_rackspace_addresses[ip_address]
 
@@ -724,4 +716,5 @@ class ServerBehaviors(BaseBehavior):
             "destination_type": destination_type,
             "delete_on_termination": delete_on_termination}]
         return block_device_matrix
+
 
