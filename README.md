@@ -1,3 +1,5 @@
+# RPCQE NO LONGER USES OR MAINTAINS THIS REPO FOR RPC TESTING
+
 CloudCAFE, An Open CAFE Implementation for OpenStack
 ====================================================
 
